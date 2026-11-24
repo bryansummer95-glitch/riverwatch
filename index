@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>River Watch — Flood Response Decision Support</title>
+  <style>
+    :root {
+      --navy: #0f172a;
+      --navy-mid: #1e293b;
+      --blue: #2563eb;
+      --blue-dark: #1d4ed8;
+      --teal: #0d9488;
+      --bg: #f1f5f9;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+      --muted: #475569;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      line-height: 1.5;
+    }
+    header {
+      background: linear-gradient(135deg, var(--navy) 0%, var(--navy-mid) 100%);
+      color: #fff;
+      padding: 18px 28px;
+      border-bottom: 3px solid var(--blue);
+    }
+    .header-wrap {
+      max-width: 1260px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+    header h1 { margin: 0; font-size: 22px; }
+    header p { margin: 2px 0 0; font-size: 13px; color: #cbd5e1; }
+    .pill {
+      background: rgba(37, 99, 235, 0.25);
+      border: 1px solid rgba(147, 197, 253, 0.45);
+      color: #dbeafe;
+      padding: 6px 14px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 600;
+    }
+    .disclaimer-bar {
+      background: #fef3c7;
+      color: #92400e;
+      text-align: center;
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-bottom: 1px solid #fcd34d;
+    }
+    main {
+      max-width: 1260px;
+      margin: 22px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: 320px 1fr;
+      gap: 20px;
+      align-items: start;
+    }
+    @media (max-width: 920px) {
+      main { grid-template-columns: 1fr; }
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+      margin-bottom: 18px;
+      box-shadow: 0 2px 6px rgba(15, 23, 42, 0.04);
+    }
+    h2 { margin: 0 0 12px; font-size: 16px; color: var(--navy); }
+    details summary {
+      font-weight: 700;
+      font-size: 15px;
+      cursor: pointer;
+      color: var(--navy);
+    }
+    .field { margin-top: 12px; }
+    label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+      color: var(--muted);
+      margin-bottom: 4px;
+    }
+    input, select, textarea {
+      width: 100%;
+      padding: 9px 10px;
+      border: 1px solid #94a3b8;
+      border-radius: 6px;
+      font-size: 14px;
+      font-family: inherit;
+      background: #f8fafc;
+    }
+    input:focus, select:focus, textarea:focus {
+      outline: none;
+      border-color: var(--blue);
+      background: #fff;
+    }
+    .btn-row { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+    button {
+      padding: 9px 14px;
+      border: none;
+      border-radius: 6px;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+    }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-danger { background: #fee2e2; color: #991b1b; }
+    .btn-preset {
+      background: #f1f5f9;
+      color: #0f172a;
+      border: 1px solid #cbd5e1;
+      font-weight: 500;
+      font-size: 12px;
+    }
+    .btn-preset:hover { background: #e2e8f0; }
+    #keyStatus, #sourceStatus, #tokenMeta {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+    #answerBox {
+      white-space: pre-wrap;
+      background: #f8fafc;
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--teal);
+      border-radius: 6px;
+      padding: 14px;
+      min-height: 140px;
+      font-size: 14px;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    th, td {
+      border: 1px solid #cbd5e1;
+      padding: 6px 8px;
+      text-align: left;
+      vertical-align: top;
+    }
+    th { background: #e2e8f0; color: #0f172a; }
+    .lvl-Normal { color: #166534; font-weight: 700; }
+    .lvl-Standby { color: #b45309; font-weight: 700; }
+    .lvl-Barriers { color: #b91c1c; font-weight: 700; }
+    .tag-flag {
+      display: inline-block;
+      background: #fee2e2;
+      color: #991b1b;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .tag-ok {
+      display: inline-block;
+      background: #dcfce7;
+      color: #166534;
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 700;
+      font-size: 11px;
+    }
+    .scroll-x { overflow-x: auto; }
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      padding: 18px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="header-wrap">
+      <div>
+        <h1>🌊 River Watch</h1>
+        <p>Eight-Council Flood Response Decision Support • Flood Plan 2026/27</p>
+      </div>
+      <div class="pill">Live River Flow • Met Éireann Warnings • Team Sheet</div>
+    </div>
+  </header>
+
+  <div class="disclaimer-bar">
+    AI can make mistakes; a person makes the final decision. Duty Officer decision due by 16:00.
+  </div>
+
+  <main>
+    <!-- LEFT SIDEBAR: SETTINGS -->
+    <aside>
+      <details class="card" open>
+        <summary>⚙️ AI Brain Settings</summary>
+        <div class="field">
+          <label for="provider">Provider</label>
+          <select id="provider" onchange="onProviderChange()">
+            <option value="gemini">Google Gemini</option>
+            <option value="groq">Groq</option>
+            <option value="openai">OpenAI</option>
+            <option value="anthropic">Anthropic</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="model">Model Name</label>
+          <input type="text" id="model" value="gemini-2.5-flash" />
+        </div>
+        <div class="field">
+          <label for="apiKey">API Key (Stored in Browser Only)</label>
+          <input type="password" id="apiKey" placeholder="Paste API key here..." />
+        </div>
+        <div class="btn-row">
+          <button type="button" class="btn-primary" onclick="saveKey()">Save Key</button>
+          <button type="button" class="btn-danger" onclick="forgetKey()">Forget key</button>
+        </div>
+        <div id="keyStatus"></div>
+      </details>
+
+      <div class="card">
+        <h2>📡 Live Data Sources</h2>
+        <div id="sourceStatus">Click "Send Question" or "Refresh Live Data" to fetch live Sheet, river flows, and warnings.</div>
+        <div class="btn-row">
+          <button type="button" class="btn-preset" onclick="refreshAllData()">Refresh Live Data Only</button>
+        </div>
+      </div>
+    </aside>
+
+    <!-- RIGHT MAIN PANEL -->
+    <section>
+      <div class="card">
+        <h2>💬 Ask River Watch</h2>
+        <label for="question">Question for Duty Officer or Area Manager</label>
+        <textarea id="question" rows="3">What is tonight's plan?</textarea>
+        <div class="btn-row">
+          <button type="button" class="btn-primary" onclick="askRiverWatch()">Send Question</button>
+          <button type="button" class="btn-preset" onclick="setQ(`What is tonight's plan?`)">Tonight's plan</button>
+          <button type="button" class="btn-preset" onclick="setQ(`Why is Fermoy at that level?`)">Why Fermoy?</button>
+          <button type="button" class="btn-preset" onclick="setQ(`What if the Suir at Clonmel reaches 150 m³/s?`)">Clonmel 150 m³/s?</button>
+          <button type="button" class="btn-preset" onclick="setQ(`Which town should be first in line for a flood-defence study?`)">Area Manager study</button>
+          <button type="button" class="btn-preset" onclick="setQ(`Will my house in Mallow flood tonight?`)">Out-of-scope test</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>🧠 AI Briefing & Explanation</h2>
+        <div id="answerBox">Ready. Paste your API key on the left, click Save Key, and ask a question.</div>
+        <div id="tokenMeta">Tokens: waiting for request</div>
+      </div>
+
+      <div class="card">
+        <h2>📋 Tonight's Calculated Plan (Code Rules Applied Live)</h2>
+        <div id="crewSummary" style="font-size:13px; margin-bottom:8px;"></div>
+        <div class="scroll-x" id="tonightTableWrap">Run a query or refresh data to view live calculations.</div>
+      </div>
+
+      <div class="card">
+        <h2>📊 10-Year River Flow History Summary (2016–2025, Computed Once & Cached)</h2>
+        <div class="scroll-x" id="historyTableWrap">Run a query or refresh data to compute/load 10-year thresholds and winter flood events.</div>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    River Watch • Data sources: Google Team Sheet (live CSV), Open-Meteo Global Flood API (GloFAS v4, CC BY 4.0), Met Éireann Weather Warnings (CC BY 4.0).
+  </footer>
+
+  <script>
+    // Your published Google Sheet CSV URL
+    const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCJloh8802_CwxXJzCzFZrB59bI5UGkj90YSRNzCrrb2T3yKefX5GZGlS_y2s7wn1ZhZVlIuag2-Ch/pub?output=csv";
+
+    // Verified river gauge coordinates for each of the 8 towns on their named rivers
+    const TOWN_COORDS = {
+      "Clonmel":             { lat: 52.352, lon: -7.704, river: "Suir" },
+      "Fermoy":              { lat: 52.138, lon: -8.276, river: "Blackwater" },
+      "Mallow":              { lat: 52.134, lon: -8.641, river: "Blackwater" },
+      "Bandon":              { lat: 51.746, lon: -8.736, river: "Bandon" },
+      "Enniscorthy":         { lat: 52.501, lon: -6.566, river: "Slaney" },
+      "Ennis":               { lat: 52.846, lon: -8.981, river: "Fergus" },
+      "Athlone":             { lat: 53.423, lon: -7.942, river: "Shannon" },
+      "Carrick-on-Shannon":  { lat: 53.946, lon: -8.095, river: "Shannon" }
+    };
+
+    const DEFAULT_MODELS = {
+      gemini: "gemini-2.5-flash",
+      groq: "llama-3.3-70b-versatile",
+      openai: "gpt-4o-mini",
+      anthropic: "claude-3-5-haiku-latest"
+    };
+
+    const FLOOD_PLAN_TEXT = `
+THE FLOOD PLAN (version 2026/27):
+1. Who decides: The Duty Officer decides each afternoon by 16:00. River Watch recommends; it never sends a crew. Duty Officer records decision and reason.
+2. Numbers that count: Daily river flow of that town's own river at that town. Forecast peak = highest daily river_discharge_max forecast for today and next 2 days (3 days total). Thresholds = town's 95th and 99th percentiles of daily flow over 10 full years (1 Jan 2016 to 31 Dec 2025).
+3. Levels:
+   - Normal: forecast peak < 95th percentile.
+   - Standby: forecast peak >= 95th and < 99th; staff on call confirmed, pumps checked, sandbags staged.
+   - Barriers: forecast peak >= 99th; barriers erected by a crew before 18:00.
+4. Warnings: Orange or red rain warning from Met Éireann covering the town's county in force in next 48h raises level by 1 step (Normal -> Standby, Standby -> Barriers). Yellow warning is mentioned but changes nothing. Towns spanning two counties (Athlone: Westmeath & Roscommon; Carrick-on-Shannon: Leitrim & Roscommon) count warnings for both.
+5. Rehearsal values: If flow_override_m3s has a value, use it instead of forecast peak. If warning_override says orange or red, treat as a live warning of that level. Always explicitly state when a rehearsal value is used.
+6. Crews: Three mobile crews based at Clonmel, Mallow, Athlone. Each crew can erect barriers in at most 2 towns per night, only within its area:
+   - Clonmel crew: Clonmel, Fermoy, Enniscorthy
+   - Mallow crew: Mallow, Fermoy, Bandon (NOTE: check notes column! If Mallow van is in repair, Mallow crew can work in Mallow ONLY tonight).
+   - Athlone crew: Athlone, Carrick-on-Shannon, Ennis
+   If towns needing Barriers outnumber crew places, rank by % above 99th percentile ((peak - p99)/p99 * 100), highest first; tie-break by higher peak flow. Towns that cannot have barriers (Rule 7) do not take a crew place. A town at Barriers without a crew gets every Standby measure and is flagged to the Area Manager.
+7. Barrier sets: A town with 0 barrier sets available (or loaned out in notes) cannot have barriers erected: gets every Standby measure and is flagged to the Area Manager.
+8. Area Manager's question: Count high-flow events = runs of consecutive days >= 99th percentile in winters (1 Oct to 31 Mar) from 2016/17 to 2024/25 (9 winters). Report town with most events, compare last 4 winters (2021/22–2024/25) vs first 4 winters (2016/17–2019/20), and name one limitation of this count (e.g., damage severity, event duration, existing flood defences).
+9. Not covered (Out of scope): Coastal/tidal flooding, road closures, insurance, or individual homes/properties -> refer to the council's area office.
+`.trim();
+
+    // Safe storage wrapper (handles restricted browser localStorage gracefully)
+    let memoryStorage = {};
+    function safeSet(k, v) {
+      memoryStorage[k] = v;
+      try { localStorage.setItem(k, v); return true; } catch { return false; }
+    }
+    function safeGet(k) {
+      try {
+        const val = localStorage.getItem(k);
+        if (val !== null) return val;
+      } catch {}
+      return memoryStorage[k] || "";
+    }
+    function safeRemove(k) {
+      delete memoryStorage[k];
+      try { localStorage.removeItem(k); } catch {}
+    }
+
+    window.onload = () => {
+      const p = safeGet("rw_provider");
+      const m = safeGet("rw_model");
+      const k = safeGet("rw_api_key");
+      if (p) document.getElementById("provider").value = p;
+      if (m) document.getElementById("model").value = m;
+      if (k) {
+        document.getElementById("apiKey").value = k;
+        document.getElementById("keyStatus").innerText = "✓ API key loaded from browser storage.";
+      }
+    };
+
+    function onProviderChange() {
+      const p = document.getElementById("provider").value;
+      document.getElementById("model").value = DEFAULT_MODELS[p] || "";
+    }
+
+    function saveKey() {
+      const p = document.getElementById("provider").value;
+      const m = document.getElementById("model").value.trim();
+      const k = document.getElementById("apiKey").value.trim();
+      if (!k) {
+        document.getElementById("keyStatus").innerText = "Please paste an API key first.";
+        return;
+      }
+      const persisted = safeSet("rw_provider", p) && safeSet("rw_model", m) && safeSet("rw_api_key", k);
+      document.getElementById("keyStatus").innerText = persisted
+        ? "✓ Key saved in browser localStorage (never sent to GitHub)."
+        : "✓ Key saved for this active tab session (browser blocked persistent localStorage).";
+    }
+
+    function forgetKey() {
+      safeRemove("rw_api_key");
+      document.getElementById("apiKey").value = "";
+      document.getElementById("keyStatus").innerText = "Key cleared.";
+    }
+
+    function setQ(text) {
+      document.getElementById("question").value = text;
+    }
+
+    function parseCSV(text) {
+      const lines = text.trim().split(/\r?\n/).filter(l => l.trim().length > 0);
+      const headers = lines[0].split(",").map(h => h.trim
